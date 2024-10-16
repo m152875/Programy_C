@@ -5,9 +5,10 @@
             "label": "C/C++: gcc.exe build active file",
             "command": "C:\\Program Files\\minGW\\ucrt64\\bin\\gcc.exe",
             "args": [
-                "-std=c99",
+                "-std=c11",
                 "-Wall" ,
                 "-Werror",
+                "-Wextra",
                 "-fdiagnostics-color=always",
                 "-g",
                 "${file}",
