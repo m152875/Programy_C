@@ -26,37 +26,56 @@ char strToInt(char str)
     return res;
 }
 
-void readContact(char *contactP)
+struct contactS{
+    char name[101];
+    char number[101];
+};
+struct contactS contact; 
+
+void readLine(char *dest, int maxSize)
 {
-    contactP = "Test poitra";
-    printf("Value at *ptr = %s \n", contactP);
+    int indx = 0;
+    char c;
+    while ((c = getchar()) != '\n' && indx < maxSize)
+    {
+        dest[indx] = c;
+        indx++;
+    }
+}
+
+void readContact()
+{
+    //get Name
+    readLine(contact.name, 101);
+
+    //get Number
+    readLine(contact.number, 101);
+}
+void eraseContact()
+{
+    //erase Contact
+    memset(contact.name,0,strlen(contact.name));
+
+    //erase Number
+    memset(contact.number,0,strlen(contact.number));
 }
 
 void manageInput(int size, char seekedNumbers[])
 {
-    char rawInputLine[101];
-    char contact[202];
+    readContact();
 
-    readContact(contact);
-    printf("Dobre: %s\n", contact);
-    
-    while(fgets(rawInputLine, 101, stdin) != NULL)
+    printf("Meno: %s\n", contact.name);
+    printf("Cislo: %s\n", contact.number);
+
+    while((int)strlen(contact.name) == 0)
     {
-        //striping the line to the right lenght - \n 
-        int inputSize = strlen(rawInputLine)-2;
-        char inputLine[inputSize]; 
-        memcpy(inputLine, rawInputLine, inputSize*sizeof(char));
-
-        //for each letter or number check the equality (only untill inputSize - numbersSize)
-        for(int inpIndex = 0; inpIndex < inputSize-size; inpIndex ++)
+        //for each letter in Name
+        for(int nameIndex = 0; nameIndex < (int)strlen(contact.name)-size; nameIndex++)
         {
             int isSame = 1;
             for (int i = 0; i < size; i++)
             {
-                int test = inputLine[inpIndex+i];
-                if(isalpha(inputLine[inpIndex+i]))
-                    test = strToInt(inputLine[inpIndex+i]);
-                if (test != seekedNumbers[i])
+                if (strToInt(contact.name[nameIndex+i]) != seekedNumbers[i])
                 {
                     isSame = 0;
                     continue;
@@ -64,11 +83,32 @@ void manageInput(int size, char seekedNumbers[])
             }
             if(isSame == 1)
             {
-                printf("%s\n", inputLine);
+                printf("%s, %s\n", contact.name, contact.number);
                 continue;
             }
         }
 
+        //for each digit in Number
+        for(int numberIndex = 0; numberIndex < (int)strlen(contact.number)-size; numberIndex++)
+        {
+            int isSame = 1;
+            for (int i = 0; i < size; i++)
+            {
+                if (contact.number[numberIndex+i] != seekedNumbers[i])
+                {
+                    isSame = 0;
+                    continue;
+                }
+            }
+            if(isSame == 1)
+            {
+                printf("%s, %s\n", contact.name, contact.number);
+                continue;
+            }
+        }
+        
+        eraseContact();
+        readContact();
     }
 }
 
