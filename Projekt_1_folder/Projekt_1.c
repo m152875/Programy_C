@@ -26,14 +26,25 @@ char strToInt(char str)
     return res;
 }
 
+void readContact(char *contactP)
+{
+    contactP = "Test poitra";
+    printf("Value at *ptr = %s \n", contactP);
+}
+
 void manageInput(int size, char seekedNumbers[])
 {
     char rawInputLine[101];
+    char contact[202];
+
+    readContact(contact);
+    printf("Dobre: %s\n", contact);
+    
     while(fgets(rawInputLine, 101, stdin) != NULL)
     {
         //striping the line to the right lenght - \n 
         int inputSize = strlen(rawInputLine)-2;
-        char inputLine[inputSize];
+        char inputLine[inputSize]; 
         memcpy(inputLine, rawInputLine, inputSize*sizeof(char));
 
         //for each letter or number check the equality (only untill inputSize - numbersSize)
@@ -57,6 +68,7 @@ void manageInput(int size, char seekedNumbers[])
                 continue;
             }
         }
+
     }
 }
 
