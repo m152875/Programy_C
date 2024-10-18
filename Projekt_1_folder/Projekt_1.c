@@ -4,6 +4,7 @@
 
 char strToInt(char str)
 {
+    // get a letter in the arguments and return a number coresponding to that letter
     char res = '\0';
         if((str >= 'a' && str <= 'c') || (str >= 'A' && str <= 'C'))
             return '2';
@@ -26,100 +27,132 @@ char strToInt(char str)
     return res;
 }
 
+// struct for storing contacts from the input
 struct contactS{
     char name[101];
     char number[101];
 };
-struct contactS contact; 
 
 void readLine(char *dest, int maxSize)
 {
     int indx = 0;
     char c;
-    while ((c = getchar()) != '\n' && indx < maxSize)
+    //read until the end of the line or to the max input size
+    while (indx < maxSize - 1 && (c = getchar()) != '\n' && c != EOF)
     {
+        //skip '\r' in order to have the printf function working properly
+        if(c == '\r' )
+        {
+            continue;
+        }
         dest[indx] = c;
         indx++;
     }
+    dest[indx] = '\0';
 }
 
-void readContact()
+void readContact(struct contactS *_contact)
 {
-    //get Name
-    readLine(contact.name, 101);
+    //read name from the first line and store it in the contacts
+    readLine(_contact->name, 101);
 
-    //get Number
-    readLine(contact.number, 101);
+    //read the number from the second line and store it in the contacts
+    readLine(_contact->number, 101);
 }
-void eraseContact()
-{
-    //erase Contact
-    memset(contact.name,0,strlen(contact.name));
 
-    //erase Number
-    memset(contact.number,0,strlen(contact.number));
+void eraseContact(struct contactS *_contact)
+{
+    //erase the name from the contact 
+    memset(_contact->name,0, sizeof(_contact->name));
+
+    //erase the name from the contact 
+    memset(_contact->number,0,sizeof(_contact->number));
+}
+
+int containsNumbers(char strInput[], int inpSize,char seekedNumbers [], int numSize)
+{
+    //if there is seeked number sequence in the string return 1 else 0 
+    for(int strIndex = 0; strIndex < inpSize; strIndex++)
+    {
+        int isSame = 1;
+        // compare the following numbers
+        for (int i = 0; i < numSize; i++)
+        {
+            //if the values are not matching leave go to the next letter
+            char inpChar = strInput[strIndex+i];
+            // translate the letter to the numbers
+            if((strInput[strIndex+i] >= 'a' && strInput[strIndex+i] <= 'z' ) ||
+             (strInput[strIndex+i] >= 'A' && strInput[strIndex+i] <= 'Z' ) || strInput[strIndex+i] == '+' )
+                {
+                    inpChar = strToInt(strInput[strIndex+i]);
+                }
+            // look for equality
+            if (inpChar != seekedNumbers[i]) 
+            {
+                isSame = 0;
+                continue;
+            }
+            
+        }
+        if(isSame == 1)
+            return 1;
+    }
+    return 0;
 }
 
 void manageInput(int size, char seekedNumbers[])
 {
-    readContact();
+    struct contactS contact;
+    int foundCount = 0;
 
-    printf("Meno: %s\n", contact.name);
-    printf("Cislo: %s\n", contact.number);
+    //read the first contact from the file to get the while running
+    readContact(&contact);
 
-    while((int)strlen(contact.name) == 0)
+    while((int)strlen(contact.name) != 0)
     {
-        //for each letter in Name
-        for(int nameIndex = 0; nameIndex < (int)strlen(contact.name)-size; nameIndex++)
+        // if there are no inputed numbers print all of the contacts in the file
+        if(size == 0)
         {
-            int isSame = 1;
-            for (int i = 0; i < size; i++)
-            {
-                if (strToInt(contact.name[nameIndex+i]) != seekedNumbers[i])
-                {
-                    isSame = 0;
-                    continue;
-                }
-            }
-            if(isSame == 1)
-            {
-                printf("%s, %s\n", contact.name, contact.number);
-                continue;
-            }
+            printf("%s, %s\n", contact.name, contact.number);
+            eraseContact(&contact); // erase the values in the contact variable
+            readContact(&contact); // read the next contact
         }
+        // else try to find the matching numbers
+        else
+        {
+            //for each letter in Name look for equality in the numbers[]
+            if (containsNumbers(contact.name, (int)strlen(contact.name), seekedNumbers, size) == 1)
+            {
+                foundCount++;// add 1 to the foundCount
+                printf("%s, %s\n", contact.name, contact.number);
+            }
 
-        //for each digit in Number
-        for(int numberIndex = 0; numberIndex < (int)strlen(contact.number)-size; numberIndex++)
-        {
-            int isSame = 1;
-            for (int i = 0; i < size; i++)
+            //for each digit in Number look for equality in the numbers[]
+            if (containsNumbers(contact.number, (int)strlen(contact.number), seekedNumbers, size) == 1)
             {
-                if (contact.number[numberIndex+i] != seekedNumbers[i])
-                {
-                    isSame = 0;
-                    continue;
-                }
+                foundCount++;// add 1 to the foundCount
+                printf("found %s, %s\n", contact.name, contact.number);
             }
-            if(isSame == 1)
-            {
-                printf("%s, %s\n", contact.name, contact.number);
-                continue;
-            }
+            // erase the last contact and read a new one
+            eraseContact(&contact);
+            readContact(&contact);
         }
-        
-        eraseContact();
-        readContact();
+    }
+    //if the wasn`t any match in the file and if there were some arguments given print "Not found"
+    if(foundCount == 0 && size != 0)
+    {
+        printf("Not found\n");
     }
 }
 
 int main(int argc, char *argv[])
 {
+    //if there are any args feed them to manageInput function
     if(argc > 1)
     {
-        printf("%s\n",argv[1]);
-        printf("Dlzka cisla: %d\n",(int)strlen(argv[1]));
         manageInput(strlen(argv[1]), argv[1]);
     }
+    //else feed 0 and empty string
     else
     {
         manageInput(0,"");
