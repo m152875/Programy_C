@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
+#define MAX_INPUT_LENGTH 101
+
+// struct for storing contacts from the input
+struct contactS{
+    char name[MAX_INPUT_LENGTH];
+    char number[MAX_INPUT_LENGTH];
+};
 
 char strToInt(char str)
 {
@@ -27,13 +33,7 @@ char strToInt(char str)
     return res;
 }
 
-// struct for storing contacts from the input
-struct contactS{
-    char name[101];
-    char number[101];
-};
-
-void readLine(char *dest, int maxSize)
+int readLine(char *dest, int maxSize)
 {
     int indx = 0;
     char c;
@@ -48,25 +48,39 @@ void readLine(char *dest, int maxSize)
         dest[indx] = c;
         indx++;
     }
-    dest[indx] = '\0';
+    if(indx == 100)
+    {
+        fprintf(stderr,"Read line has exceded the lenght limit\n");
+        dest[indx] = '\0'; //add ''\0' to the last character
+        return 0;
+    }
+    return 1;
 }
 
-void readContact(struct contactS *_contact)
-{
-    //read name from the first line and store it in the contacts
-    readLine(_contact->name, 101);
-
-    //read the number from the second line and store it in the contacts
-    readLine(_contact->number, 101);
-}
-
-void eraseContact(struct contactS *_contact)
+void initContact(struct contactS *_contact)
 {
     //erase the name from the contact 
     memset(_contact->name,0, sizeof(_contact->name));
 
     //erase the name from the contact 
     memset(_contact->number,0,sizeof(_contact->number));
+}
+
+int readContact(struct contactS *_contact)
+{
+    //erase data from memory 
+    initContact(_contact);
+
+    //read name from the first line and store it in the contacts
+    if(readLine(_contact->name, MAX_INPUT_LENGTH) == 0)
+        return 0; // wrong input
+
+    //read the number from the second line and store it in the contacts
+    if(readLine(_contact->number, MAX_INPUT_LENGTH) == 0)
+        return 0; // wrong input
+        
+    //if input was read correctly
+    return 1;
 }
 
 int containsNumbers(char strInput[], int inpSize,char seekedNumbers [], int numSize)
@@ -86,7 +100,7 @@ int containsNumbers(char strInput[], int inpSize,char seekedNumbers [], int numS
                 {
                     inpChar = strToInt(strInput[strIndex+i]);
                 }
-            // look for equality
+            // if the chars are not the same continue
             if (inpChar != seekedNumbers[i]) 
             {
                 isSame = 0;
@@ -94,55 +108,62 @@ int containsNumbers(char strInput[], int inpSize,char seekedNumbers [], int numS
             }
             
         }
+        //if the strInput contains the seekedNumbers return 1
         if(isSame == 1)
             return 1;
     }
     return 0;
 }
 
-void manageInput(int size, char seekedNumbers[])
+int manageInput(char seekedNumbers[])
 {
     struct contactS contact;
     int foundCount = 0;
 
+    int numSize = strlen(seekedNumbers);
+
     //read the first contact from the file to get the while running
-    readContact(&contact);
+    if(readContact(&contact) == 0)
+        return 0;
 
     while((int)strlen(contact.name) != 0)
     {
         // if there are no inputed numbers print all of the contacts in the file
-        if(size == 0)
+        if(numSize == 0)
         {
             printf("%s, %s\n", contact.name, contact.number);
-            eraseContact(&contact); // erase the values in the contact variable
-            readContact(&contact); // read the next contact
+            foundCount++;// add 1 to the foundCount
         }
         // else try to find the matching numbers
         else
         {
+            int found = 0;
+
             //for each letter in Name look for equality in the numbers[]
-            if (containsNumbers(contact.name, (int)strlen(contact.name), seekedNumbers, size) == 1)
+            if (containsNumbers(contact.name, (int)strlen(contact.name), seekedNumbers, numSize) == 1)
+                found = 1;
+
+            //for each digit in Number look for equality in the numbers[]
+            if (containsNumbers(contact.number, (int)strlen(contact.number), seekedNumbers, numSize) == 1)
+                found = 1;
+
+            if (found == 1)
             {
                 foundCount++;// add 1 to the foundCount
                 printf("%s, %s\n", contact.name, contact.number);
             }
-
-            //for each digit in Number look for equality in the numbers[]
-            if (containsNumbers(contact.number, (int)strlen(contact.number), seekedNumbers, size) == 1)
-            {
-                foundCount++;// add 1 to the foundCount
-                printf("found %s, %s\n", contact.name, contact.number);
-            }
-            // erase the last contact and read a new one
-            eraseContact(&contact);
-            readContact(&contact);
         }
+
+        // erase the last contact and read a new one
+        if(readContact(&contact) == 0)
+            return 0;
     }
     //if the wasn`t any match in the file and if there were some arguments given print "Not found"
-    if(foundCount == 0 && size != 0)
+    if(foundCount < 1)
     {
         printf("Not found\n");
     }
+    return 1;
 }
 
 int main(int argc, char *argv[])
@@ -150,11 +171,20 @@ int main(int argc, char *argv[])
     //if there are any args feed them to manageInput function
     if(argc > 1)
     {
-        manageInput(strlen(argv[1]), argv[1]);
+        //check if the inputed argumentnumber is a number
+        for (int argIndx = 0; argIndx < (int)strlen(argv[1]); argIndx++)
+        {
+            if(argv[1][argIndx] < '0' || argv[1][argIndx] > '9')
+            {
+                fprintf(stderr,"Inputed number was in the wrong format\n");
+                return 0;
+            }
+        }       
+        return manageInput(argv[1]);
     }
     //else feed 0 and empty string
     else
     {
-        manageInput(0,"");
+        return manageInput("");
     }
 }
