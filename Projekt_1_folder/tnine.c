@@ -35,6 +35,7 @@ char strToInt(char str)
 
 int readLine(char *dest, int maxSize)
 {
+    //return 1 if the line was read correctly else 0 if the input was wrong
     int indx = 0;
     char c;
     //read until the end of the line or to the max input size
@@ -52,9 +53,9 @@ int readLine(char *dest, int maxSize)
     {
         fprintf(stderr,"Read line has exceded the lenght limit\n");
         dest[indx] = '\0'; //add ''\0' to the last character
-        return 0;
+        return 0;// wrong input
     }
-    return 1;
+    return 1;// input was read correctly
 }
 
 void initContact(struct contactS *_contact)
