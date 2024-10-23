@@ -124,7 +124,7 @@ int manageInput(char seekedNumbers[])
 
     //read the first contact from the file to get the while running
     if(readContact(&contact) == 0)
-        return 0;
+        return 1;
 
     while((int)strlen(contact.name) != 0)
     {
@@ -156,14 +156,14 @@ int manageInput(char seekedNumbers[])
 
         // erase the last contact and read a new one
         if(readContact(&contact) == 0)
-            return 0;
+            return 1;
     }
     //if the wasn`t any match in the file and if there were some arguments given print "Not found"
     if(foundCount < 1)
     {
         printf("Not found\n");
     }
-    return 1;
+    return 0;
 }
 
 int main(int argc, char *argv[])
