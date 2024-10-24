@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
             if(argv[1][argIndx] < '0' || argv[1][argIndx] > '9')
             {
                 fprintf(stderr,"Inputed number was in the wrong format\n");
-                return 0;
+                return 1;
             }
         }       
         return manageInput(argv[1]);
