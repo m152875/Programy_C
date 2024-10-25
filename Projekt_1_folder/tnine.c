@@ -37,13 +37,13 @@ char strToInt(char str)
     return res;
 }
 
-int readLine(char *dest, int maxSize)
+int readLine(char *dest)
 {
     //return 1 if the line was read correctly else 0 if the input was wrong
     int indx = 0;
     char c;
     //read until the end of the line or to the max input size
-    while (indx < maxSize - 1 && (c = getchar()) != '\n' && c != EOF)
+    while (indx < MAX_INPUT_LENGTH && (c = getchar()) != '\n' && c != EOF)
     {
         //skip '\r' in order to have the printf function working properly
         if(c == '\r' )
@@ -53,7 +53,7 @@ int readLine(char *dest, int maxSize)
         dest[indx] = c;
         indx++;
     }
-    if(indx == (maxSize - 1))
+    if(indx == (MAX_INPUT_LENGTH))
     {
         fprintf(stderr,"Read line has exceded the lenght limit\n");
         dest[indx] = '\0'; //add ''\0' to the last character
@@ -77,11 +77,11 @@ int readContact(struct contactS *_contact)
     initContact(_contact);
 
     //read name from the first line and store it in the contacts
-    if(readLine(_contact->name, MAX_INPUT_LENGTH) == 0)
+    if(readLine(_contact->name) == 0)
         return 0; // wrong input
 
     //read the number from the second line and store it in the contacts
-    if(readLine(_contact->number, MAX_INPUT_LENGTH) == 0)
+    if(readLine(_contact->number) == 0)
         return 0; // wrong input
         
     //if input was read correctly
