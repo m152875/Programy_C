@@ -12,23 +12,27 @@ char strToInt(char str)
 {
     // get a letter in the arguments and return a number coresponding to that letter
     char res = '\0';
-        if((str >= 'a' && str <= 'c') || (str >= 'A' && str <= 'C'))
-            return '2';
-        else if((str >= 'd' && str <= 'f') || (str >= 'D' && str <= 'F'))
-            return '3';
-        else if((str >= 'g' && str <= 'i') || (str >= 'G' && str <= 'I'))
-            return '4';
-        else if((str >= 'j' && str <= 'l') || (str >= 'J' && str <= 'L'))
-            return '5';
-        else if((str >= 'm' && str <= 'o') || (str >= 'M' && str <= 'O'))
-            return '6';
-        else if((str >= 'p' && str <= 's') || (str >= 'P' && str <= 'S'))
-            return '7';
-        else if((str >= 't' && str <= 'v') || (str >= 'T' && str <= 'V'))
-            return '8';
-        else if((str >= 'w' && str <= 'z') || (str >= 'W' && str <= 'Z'))
-            return '9';
-        else if(str == '+')
+
+    // get char to upper case
+    if (str >= 'a' && str <= 'z') str -= 32;
+
+    if((str >= 'A' && str <= 'C'))
+        return '2';
+    else if((str >= 'D' && str <= 'F'))
+        return '3';
+    else if((str >= 'G' && str <= 'I'))
+        return '4';
+    else if((str >= 'J' && str <= 'L'))
+        return '5';
+    else if((str >= 'M' && str <= 'O'))
+        return '6';
+    else if((str >= 'P' && str <= 'S'))
+        return '7';
+    else if((str >= 'T' && str <= 'V'))
+        return '8';
+    else if((str >= 'W' && str <= 'Z'))
+        return '9';
+    else if(str == '+')
             return '0';
     return res;
 }
@@ -49,7 +53,7 @@ int readLine(char *dest, int maxSize)
         dest[indx] = c;
         indx++;
     }
-    if(indx == 100)
+    if(indx == (maxSize - 1))
     {
         fprintf(stderr,"Read line has exceded the lenght limit\n");
         dest[indx] = '\0'; //add ''\0' to the last character
@@ -183,7 +187,7 @@ int main(int argc, char *argv[])
         }       
         return manageInput(argv[1]);
     }
-    //else feed 0 and empty string
+    //else feed empty string
     else
     {
         return manageInput("");
