@@ -99,29 +99,17 @@ int printHelp()
     return 0;
 }
 
-int lineLength(struct bitMapStruct *bitMap, struct coordinates *start, struct coordinates *end,int orientation)
+int hLine(struct bitMapStruct *bitMap, struct coordinates *start, struct coordinates *end)
 {
     int maxLength = 0;
-    int r, s;
 
-    if(orientation)
-    {
-        r = bitMap->rows;
-        s = bitMap->columns;
-    }
-    else
-    {
-        s = bitMap->rows;
-        r = bitMap->columns;
-    }
-
-    for (int rowIdx = 0; rowIdx < r; rowIdx++)
+    for (int rowIdx = 0; rowIdx < bitMap->rows; rowIdx++)
     {
         int length = 0;
         struct coordinates rowStart;
-        for (int bitIdx = 0; bitIdx < s; bitIdx++)
+        for (int bitIdx = 0; bitIdx < bitMap->columns; bitIdx++)
         {
-            if(!bitMap->data[(rowIdx * s) + bitIdx] || bitIdx == s - 1)
+            if(!bitMap->data[(rowIdx * bitMap->columns) + bitIdx] || bitIdx == bitMap->columns - 1)
             {
                 if(length > maxLength)
                 {
@@ -136,6 +124,39 @@ int lineLength(struct bitMapStruct *bitMap, struct coordinates *start, struct co
                 if(rowStart.Y + length != bitIdx)
                 {
                     setCoordinates(&rowStart, rowIdx, bitIdx - length);
+                }
+                length++;
+            }
+        }
+    }
+    fprintf(stdout, "(%d,%d) -- (%d,%d)\n",start->X,start->Y, end->X,end->Y);
+    return 0;
+}
+
+int vLine(struct bitMapStruct *bitMap, struct coordinates *start, struct coordinates *end)
+{
+    int maxLength = 0;
+    for (int columnsIdx = 0; columnsIdx < bitMap->columns; columnsIdx++)
+    {
+        int length = 0;
+        struct coordinates columnStart;
+        for (int rowIdx = 0; rowIdx < bitMap->rows; rowIdx++)
+        {
+            if(!bitMap->data[(rowIdx * bitMap->columns) + columnsIdx] || rowIdx == bitMap->rows - 1)
+            {
+                if(length > maxLength)
+                {
+                    maxLength = length;
+                    setCoordinates(start, columnStart.X, columnStart.Y);
+                    setCoordinates(end, rowIdx, columnsIdx);
+                }
+                length = 0;
+            }
+            else
+            {
+                if(columnStart.X + length != rowIdx)
+                {
+                    setCoordinates(&columnStart, rowIdx - length, columnsIdx);
                 }
                 length++;
             }
@@ -171,14 +192,14 @@ int manageInput(char ArgInp[], char filePath[])
 
         case Hline:
             if(!bitMapLoad(&bitMap,filePath))
-                return lineLength(&bitMap, &start, &end, 1);
+                return hLine(&bitMap, &start, &end);
             else
                 return 0;
             break;
 
         case Vline:
             if(!bitMapLoad(&bitMap,filePath))
-                return lineLength(&bitMap, &start, &end, 0);
+                return vLine(&bitMap, &start, &end);
             else
                 return 0;
             break;
