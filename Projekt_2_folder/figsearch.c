@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+
 enum programOptions {Help, Test, Hline, Vline, Square};
 
 struct bitMapStruct{
@@ -77,7 +78,7 @@ int bitMapLoad(struct bitMapStruct *bitMap, char filePath[])
     
 int assignInputToEmun(char ArgInp[])
 {   
-    const char stringMapping[5][7] = {"--help","test","hline","vline","sqare"};
+    const char stringMapping[5][7] = {"--help","test","hline","vline","square"};
     for (int idx = 0; idx < 5; idx++)
     {
         if(!strcmp(ArgInp, stringMapping[idx]))
@@ -99,31 +100,51 @@ int printHelp()
     return 0;
 }
 
-int hLine(struct bitMapStruct *bitMap, struct coordinates *start, struct coordinates *end)
+int findLine(struct bitMapStruct *bitMap, struct coordinates *start, struct coordinates *end, int isHorizontal)
 {
     int maxLength = 0;
+    //outer and inner Loop (line, bit)
+    int widthLoopSize = isHorizontal ? bitMap->rows : bitMap->columns;
+    int lengthLoopSize = isHorizontal ? bitMap->columns : bitMap->rows;
 
-    for (int rowIdx = 0; rowIdx < bitMap->rows; rowIdx++)
+    for (int widthIdx = 0; widthIdx < widthLoopSize; widthIdx++)
     {
         int length = 0;
-        struct coordinates rowStart;
-        for (int bitIdx = 0; bitIdx < bitMap->columns; bitIdx++)
+        struct coordinates lineStart;
+        for (int lengthIdx = 0; lengthIdx < lengthLoopSize; lengthIdx++)
         {
-            if(!bitMap->data[(rowIdx * bitMap->columns) + bitIdx] || bitIdx == bitMap->columns - 1)
+            int bitValue = isHorizontal ? bitMap->data[(widthIdx * lengthLoopSize) + lengthIdx] 
+            : bitMap->data[(lengthIdx * widthLoopSize) + widthIdx];
+
+            if(!bitValue || lengthIdx == lengthLoopSize - 1)
             {
                 if(length > maxLength)
                 {
                     maxLength = length;
-                    setCoordinates(start, rowStart.X, rowStart.Y);
-                    setCoordinates(end, rowIdx, bitIdx);
+                    if(isHorizontal)
+                    {
+                        setCoordinates(start, lineStart.X, lineStart.Y);
+                        setCoordinates(end, widthIdx, lengthIdx);
+                    }
+                    else
+                    {
+                        setCoordinates(start, lineStart.X, lineStart.Y);
+                        setCoordinates(end, lengthIdx, widthIdx);
+                    }
                 }
                 length = 0;
             }
             else
             {
-                if(rowStart.Y + length != bitIdx)
+                //set start position
+                int startPosition = isHorizontal ? lineStart.X : lineStart.Y;
+
+                if(startPosition + length != lengthIdx)
                 {
-                    setCoordinates(&rowStart, rowIdx, bitIdx - length);
+                    if (isHorizontal)
+                        setCoordinates(&lineStart, widthIdx, lengthIdx - length);
+                    else
+                        setCoordinates(&lineStart, lengthIdx - length, widthIdx);
                 }
                 length++;
             }
@@ -133,37 +154,63 @@ int hLine(struct bitMapStruct *bitMap, struct coordinates *start, struct coordin
     return 0;
 }
 
-int vLine(struct bitMapStruct *bitMap, struct coordinates *start, struct coordinates *end)
+int isSquare(struct bitMapStruct *bitMap, struct coordinates *LU, struct coordinates *RD)
 {
-    int maxLength = 0;
-    for (int columnsIdx = 0; columnsIdx < bitMap->columns; columnsIdx++)
+    int size = RD->X - LU->X + 1;
+    for (int offset  = 0; offset  < size; offset++)
     {
-        int length = 0;
-        struct coordinates columnStart;
-        for (int rowIdx = 0; rowIdx < bitMap->rows; rowIdx++)
+        //vpravo
+        if(bitMap->data[(LU->X * bitMap->columns) + LU->Y + offset] == 0)
+            return 0;
+        //dole
+        if(bitMap->data[((LU->X + offset) * bitMap->columns) + LU->Y] == 0)
+            return 0;
+        //vlavo
+        if(bitMap->data[(RD->X * bitMap->columns) + RD->Y - offset] == 0)
+            return 0;
+        //hore
+        if(bitMap->data[((RD->X - offset) * bitMap->columns) + RD->Y] == 0)
+           return 0;
+    }
+    return size;    
+}
+
+int square(struct bitMapStruct *bitMap, struct coordinates *start, struct coordinates *end)
+{
+    int maxSquare = 0;
+    struct coordinates testStart, testEnd;
+    for (int i = 0; i < bitMap->rows; i++)
+    {
+        for (int e = 0; e < bitMap->columns; e++)
         {
-            if(!bitMap->data[(rowIdx * bitMap->columns) + columnsIdx] || rowIdx == bitMap->rows - 1)
+            if(bitMap->data[(i * bitMap->columns) + e])
             {
-                if(length > maxLength)
+                setCoordinates(&testStart, i, e);
+                int maxPosibleSquare = bitMap->columns - e < bitMap->rows - i ? bitMap->columns - e : bitMap->rows - i;
+                int squareSize = 0;
+                if(maxSquare < maxPosibleSquare)
                 {
-                    maxLength = length;
-                    setCoordinates(start, columnStart.X, columnStart.Y);
-                    setCoordinates(end, rowIdx, columnsIdx);
+                    for (int a = maxSquare; a < maxPosibleSquare; a++)
+                    {
+                        if(bitMap->data[((i + a) * bitMap->columns) + a + e])
+                        {
+                            setCoordinates(&testEnd, i + a, e + a);
+                            squareSize = isSquare(bitMap, &testStart, &testEnd);
+                            fprintf(stdout, "test: (%d,%d) -- (%d,%d) = %d\n",testStart.X,testStart.Y, testEnd.X,testEnd.Y, squareSize);
+                            if(squareSize > maxSquare)
+                            {
+                                maxSquare = squareSize;
+                                setCoordinates(start,testStart.X, testStart.Y);
+                                setCoordinates(end, testEnd.X, testEnd.Y);
+                            }
+                        }
+                    }
                 }
-                length = 0;
-            }
-            else
-            {
-                if(columnStart.X + length != rowIdx)
-                {
-                    setCoordinates(&columnStart, rowIdx - length, columnsIdx);
-                }
-                length++;
             }
         }
     }
-    fprintf(stdout, "(%d,%d) -- (%d,%d)\n",start->X,start->Y, end->X,end->Y);
-    return 0;
+    fprintf(stdout, "(%d,%d) -- (%d,%d) = %d\n",start->X,start->Y, end->X,end->Y, maxSquare);
+    return maxSquare;
 }
 
 int manageInput(char ArgInp[], char filePath[])
@@ -192,18 +239,23 @@ int manageInput(char ArgInp[], char filePath[])
 
         case Hline:
             if(!bitMapLoad(&bitMap,filePath))
-                return hLine(&bitMap, &start, &end);
+                return findLine(&bitMap, &start, &end, 1);
             else
                 return 0;
             break;
 
         case Vline:
             if(!bitMapLoad(&bitMap,filePath))
-                return vLine(&bitMap, &start, &end);
+                return findLine(&bitMap, &start, &end, 0);
             else
                 return 0;
             break;
-
+        case Square:
+            if(!bitMapLoad(&bitMap,filePath))
+               return square(&bitMap, &start , &end);
+            else
+                return 0;
+            break;
         default:
             return 1;
             break;
