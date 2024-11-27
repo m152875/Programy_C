@@ -69,6 +69,18 @@ int bitMapLoad(struct bitMapStruct *bitMap, char filePath[])
             //change char to the numeric value
             int num = atoi(&readCharC);
             
+            //check the correctness of the read number
+            if(!isdigit(readCharC))
+            {
+                fclose(fptr);
+                return 1;
+            }
+            if(num < 1)
+            {
+                fclose(fptr);
+                return 1;
+            }
+
             //load first as a row and second as a column
             if(loadedCoordinates)
                 columnsNum = num;
@@ -82,6 +94,7 @@ int bitMapLoad(struct bitMapStruct *bitMap, char filePath[])
 
     //count the loaded bits, so we know if we had loaded all of them
     int loadedBits = 0;
+    int blankCount = 0;
     char readChar;
     //read chars while we dont have a whole bitMap or while we dont get to the EOF
     while (loadedBits < (bitMap->rows * bitMap->columns) && (readChar = getc(fptr)) != EOF)
@@ -89,9 +102,20 @@ int bitMapLoad(struct bitMapStruct *bitMap, char filePath[])
         //skip the white chars
         if(!isspace(readChar))
         {
+            //check if the bit were separated
+            if(!blankCount)
+            {
+                fclose(fptr);
+                return 1;
+            }
             //change char to the numeric value
             int bit = atoi(&readChar);
             //if the bit is not 1 or 0 return error
+            if(!isdigit(readChar))
+            {
+                fclose(fptr);
+                return 1;
+            }
             if(bit < 0 || bit > 1)
             {
                 fclose(fptr);
@@ -99,7 +123,10 @@ int bitMapLoad(struct bitMapStruct *bitMap, char filePath[])
             }
             bitMap->data[loadedBits] = bit; //load the bitMap
             loadedBits++; //increase the number of loadedBits
+            blankCount = 0; //reset blank count 
         }
+        else
+            blankCount++;
     };
 
     //if the bitMap wasnt loaded properly return error
@@ -205,7 +232,19 @@ void findLine(struct bitMapStruct *bitMap, int isHorizontal)
                         setCoordinates(&lineStart, lineIdx , bitIdx);
                     length++;
                 }
-                //if it is bigger set a new max length
+                
+                //always pick the most left upper line in vertical orintation
+                if(!isHorizontal && length == maxLength)
+                {   
+                    //compare the starting points of the lines
+                    if(start.X > lineStart.Y || (start.X == lineStart.Y && start.Y > lineStart.X))
+                    {
+                        setCoordinates(&start, lineStart.Y, lineStart.X);
+                        setCoordinates(&end, bitIdx - !bitValue, lineIdx);
+                    }
+                    length = 0; // reset length
+                }
+                //if length is bigger set a new max length
                 if(length > maxLength)
                 {
                     maxLength = length;
@@ -368,7 +407,7 @@ int manageInput(char ArgInp[], char filePath[])
             else
             {
                 //when there is a problem with the bitMap loading print an error
-                fprintf(stderr, "Problem with loading of the bitMap!\n");
+                fprintf(stderr, "Bitmap was inputed in a wrong format!\n");
                 return 1;
             }
             break;
@@ -385,7 +424,7 @@ int manageInput(char ArgInp[], char filePath[])
             else
             {
                 //when there is a problem with the bitMap loading print an error
-                fprintf(stderr, "Problem with loading of the bitMap!\n");
+                fprintf(stderr, "Bitmap was inputed in a wrong format!\n");
                 return 1;
             }
             break;
@@ -402,7 +441,7 @@ int manageInput(char ArgInp[], char filePath[])
             else
             {
                 //when there is a problem with the bitMap loading print an error
-                fprintf(stderr, "Problem with loading of the bitMap!\n");
+                fprintf(stderr, "Bitmap was inputed in a wrong format!\n");
                 return 1;
             }
             break;
@@ -424,7 +463,11 @@ int main(int argc, char *argv[])
             return manageInput(argv[1], "");
         //else send the arguments to the manageInput function
         else
+        {
+            if(argc > 3)
+                fprintf(stderr, "More that 2 arguments founded. Others will be ignored!\n");
             return manageInput(argv[1],argv[2]);
+        }
     }
     //is there is wrong number of arguments print error
     else
