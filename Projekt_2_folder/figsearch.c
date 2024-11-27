@@ -43,6 +43,11 @@ int bitMapCtor(struct bitMapStruct *bitMap,int rowsNum, int columsNum)
     return 1;
 }
 
+void bitMapDtor(struct bitMapStruct *bitMap) {
+    free(bitMap->data);
+    bitMap->data = NULL;
+}
+
 int bitMapLoad(struct bitMapStruct *bitMap, char filePath[])
 {
     //open a file from the filePath
@@ -53,10 +58,25 @@ int bitMapLoad(struct bitMapStruct *bitMap, char filePath[])
     if(fptr == NULL)
         return 1;
     
-    //read the numbers of rows and colums from the first line of the file
-    int rowsNum = 0, columnsNum  = 0;
-    fscanf(fptr,"%d %d", &rowsNum, &columnsNum);
-
+    //read the numbers of rows and colums from the file
+    int rowsNum, columnsNum;
+    int loadedCoordinates = 0;
+    char readCharC;
+    while(loadedCoordinates < 2 && (readCharC = getc(fptr)) != EOF)
+    {
+        if(!isspace(readCharC))
+        {
+            //change char to the numeric value
+            int num = atoi(&readCharC);
+            
+            //load first as a row and second as a column
+            if(loadedCoordinates)
+                columnsNum = num;
+            else
+                rowsNum = num;
+            loadedCoordinates++;//increase the number of loadedBits
+        }
+    }
     //create a bitMap and assign rows and columns
     bitMapCtor(bitMap, rowsNum, columnsNum);
 
@@ -161,47 +181,55 @@ void findLine(struct bitMapStruct *bitMap, int isHorizontal)
     {
         int length = 0;
         struct coordinates lineStart;
+
+        //reset line start
+        if(isHorizontal)
+            setCoordinates(&lineStart, lineIdx, 0);
+        else
+            setCoordinates(&lineStart,0 , lineIdx);
+
         //check each bit in the line
         for (int bitIdx = 0; bitIdx < innerLoopSize; bitIdx++)
         {
             //get the value of the bit
             int bitValue = isHorizontal ? bitMap->data[IDX(bitMap, lineIdx, bitIdx)] 
-            : bitMap->data[IDX(bitMap, bitIdx, lineIdx)];
+                                        : bitMap->data[IDX(bitMap, bitIdx, lineIdx)];
 
             //if the value is 0 or it is the end of the line we need to check the length of the line
             if(!bitValue || bitIdx == innerLoopSize - 1)
             {
+                if(bitValue)
+                {    
+                    //check the start position of the line and assign according to the orientation
+                    if (length == 0)
+                        setCoordinates(&lineStart, lineIdx , bitIdx);
+                    length++;
+                }
                 //if it is bigger set a new max length
                 if(length > maxLength)
                 {
                     maxLength = length;
-                    
                     //assign the start and end coordinates of the line according to the orientation
-                    if(isHorizontal)
+                    //and if bitvalue = 0, than end is on bitIdx - 1 
+                    if (isHorizontal) 
                     {
                         setCoordinates(&start, lineStart.X, lineStart.Y);
-                        setCoordinates(&end, lineIdx, bitIdx);
-                    }
-                    else
+                        setCoordinates(&end, lineIdx, bitIdx - !bitValue);
+                    } 
+                    else 
                     {
                         setCoordinates(&start, lineStart.Y, lineStart.X);
-                        setCoordinates(&end, bitIdx, lineIdx);
-                    }
+                        setCoordinates(&end, bitIdx - !bitValue, lineIdx);
+                    }  
                 }
                 //reset the length
                 length = 0;
             }
             else
             {
-                //check the start position of the line and assign according tothe orientation
-                int startPosition = isHorizontal ? lineStart.X : lineStart.Y;
-                if(startPosition + length != bitIdx)
-                {
-                    if (isHorizontal)
-                        setCoordinates(&lineStart, lineIdx, bitIdx - length);
-                    else
-                        setCoordinates(&lineStart, bitIdx - length, lineIdx);
-                }
+                //check the start position of the line and assign according to the orientation
+                if (length == 0)
+                    setCoordinates(&lineStart,lineIdx, bitIdx);
                 length++;
             }
         }
@@ -229,7 +257,7 @@ int isSquare(struct bitMapStruct *bitMap, struct coordinates *topLeftCorner, str
         if(bitMap->data[IDX(bitMap, topLeftCorner->X + offset, topLeftCorner->Y)] == 0)
             return 0;
         //from the bottom rigth corner to the left
-        if(bitMap->data[IDX(bitMap, bottomRightCorner->X + offset, bottomRightCorner->Y - offset)] == 0)
+        if(bitMap->data[IDX(bitMap, bottomRightCorner->X, bottomRightCorner->Y - offset)] == 0)
             return 0;
         //from the bottom rigth corner up
         if(bitMap->data[IDX(bitMap, bottomRightCorner->X - offset, bottomRightCorner->Y)] == 0)
@@ -276,7 +304,6 @@ void findSquare(struct bitMapStruct *bitMap)
                             
                             //check if the bits create a square
                             squareSize = isSquare(bitMap, &testStart, &testEnd);
-
                             //if the sqares size is bigger change the actual max and assign the start and end 
                             if(squareSize > maxSquare)
                             {
@@ -318,11 +345,13 @@ int manageInput(char ArgInp[], char filePath[])
             if(!bitMapLoad(&bitMap,filePath))
             {
                 fprintf(stdout,"Valid\n");
+                bitMapDtor(&bitMap);
                 return 0;
             }
             else
             {
                 fprintf(stderr, "Invalid\n");
+                bitMapDtor(&bitMap);
                 return 1;
             }
             break;
@@ -333,6 +362,7 @@ int manageInput(char ArgInp[], char filePath[])
             {
                 //find the longest line in the horizontal orintation
                 findLine(&bitMap, 1);
+                bitMapDtor(&bitMap);
                 return 0;
             }
             else
@@ -349,6 +379,7 @@ int manageInput(char ArgInp[], char filePath[])
             {
                 //find the longest line in the vertical orintation
                 findLine(&bitMap, 0);
+                bitMapDtor(&bitMap);
                 return 0;
             }
             else
@@ -365,6 +396,7 @@ int manageInput(char ArgInp[], char filePath[])
             {
                 //find the squares coordinates
                 findSquare(&bitMap);
+                bitMapDtor(&bitMap);
                 return 0;
             }
             else
