@@ -23,7 +23,6 @@ struct coordinates{
 void setCoordinates(struct coordinates *inp, int X, int Y)
 {
     //get row and column numbers and assign them to the coordinates structure
-
     inp->X = X; //assign X
     inp->Y = Y; //assign Y
 }
@@ -377,7 +376,6 @@ int manageInput(char ArgInp[], char filePath[])
             printHelp();
             return 0;
             break;
-        
         //test the inputed file
         case Test:
             //return Valid or Invalid based on the tests results
@@ -408,7 +406,7 @@ int manageInput(char ArgInp[], char filePath[])
             {
                 //when there is a problem with the bitMap loading print an error
                 fprintf(stderr, "Bitmap was inputed in a wrong format!\n");
-                return 1;
+                return 2;
             }
             break;
         //find the longest vertical line
@@ -425,7 +423,7 @@ int manageInput(char ArgInp[], char filePath[])
             {
                 //when there is a problem with the bitMap loading print an error
                 fprintf(stderr, "Bitmap was inputed in a wrong format!\n");
-                return 1;
+                return 2;
             }
             break;
         //find the biggest square in the bitMap
@@ -442,13 +440,13 @@ int manageInput(char ArgInp[], char filePath[])
             {
                 //when there is a problem with the bitMap loading print an error
                 fprintf(stderr, "Bitmap was inputed in a wrong format!\n");
-                return 1;
+                return 2;
             }
             break;
         //if the arguments dont match the programs options print a error
         default:
             fprintf(stderr, "Wrong inputed arguments!\n");
-            return 1;
+            return 3;
             break;
     }
 }
